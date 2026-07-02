@@ -1,6 +1,8 @@
 import os
 from peewee import PostgresqlDatabase
 
+_ssl = {"sslmode": "require"} if os.environ.get("DB_SSL", "true").lower() != "false" else {}
+
 database = PostgresqlDatabase(
     os.environ["DB_NAME"],
     user=os.environ["DB_USER"],
@@ -8,6 +10,7 @@ database = PostgresqlDatabase(
     host=os.environ.get("DB_HOST", "localhost"),
     port=int(os.environ.get("DB_PORT", 5432)),
     autorollback=True,
+    **_ssl,
 )
 
 
