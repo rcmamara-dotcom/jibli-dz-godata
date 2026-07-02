@@ -13,7 +13,6 @@ def init_db() -> None:
         password=os.environ["DB_PASSWORD"],
         host=os.environ.get("DB_HOST", "localhost"),
         port=int(os.environ.get("DB_PORT", 5432)),
-        autorollback=True,
         **ssl,
     )
     from .models import User, Trip, Parcel
