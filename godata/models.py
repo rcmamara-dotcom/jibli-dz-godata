@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from peewee import (
     Model, AutoField, CharField, TextField,
-    FloatField, DateField, DateTimeField, ForeignKeyField,
+    FloatField, IntegerField, DateField, DateTimeField, ForeignKeyField,
 )
 from .db import database
 
@@ -50,3 +50,16 @@ class Parcel(BaseModel):
 
     class Meta:
         table_name = "parcels"
+
+
+class Review(BaseModel):
+    id = AutoField()
+    trip = ForeignKeyField(Trip, backref="reviews", on_delete="CASCADE")
+    reviewer = ForeignKeyField(User, backref="given_reviews", on_delete="CASCADE")
+    rating = IntegerField()          # 1 à 5
+    comment = TextField(null=True)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "reviews"
+        indexes = ((("trip", "reviewer"), True),)   # un seul avis par (trajet, user)
