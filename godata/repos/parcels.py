@@ -34,3 +34,16 @@ class ParcelRepo:
     @staticmethod
     def force_delete(parcel_id: int) -> bool:
         return Parcel.delete().where(Parcel.id == parcel_id).execute() > 0
+
+    @staticmethod
+    def list_matching(from_city: str, to_city: str) -> list[Parcel]:
+        """Colis dont le trajet correspond, avec owner pré-chargé (pour récupérer l'email)."""
+        return list(
+            Parcel.select(Parcel, User)
+            .join(User, join_type=JOIN.LEFT_OUTER, on=(Parcel.owner == User.id))
+            .where(
+                Parcel.from_city == from_city,
+                Parcel.to_city == to_city,
+                Parcel.owner_id.is_null(False),
+            )
+        )
