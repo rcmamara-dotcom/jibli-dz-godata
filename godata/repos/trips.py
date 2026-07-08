@@ -42,6 +42,10 @@ class TripRepo:
         )
 
     @staticmethod
+    def force_delete(trip_id: int) -> bool:
+        return Trip.delete().where(Trip.id == trip_id).execute() > 0
+
+    @staticmethod
     def pop_expired(before: datetime.date) -> list[Trip]:
         """Return then delete all trips with date strictly before `before`."""
         expired = list(

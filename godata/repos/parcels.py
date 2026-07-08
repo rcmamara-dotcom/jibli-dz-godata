@@ -30,3 +30,7 @@ class ParcelRepo:
             .execute()
         )
         return deleted > 0
+
+    @staticmethod
+    def force_delete(parcel_id: int) -> bool:
+        return Parcel.delete().where(Parcel.id == parcel_id).execute() > 0

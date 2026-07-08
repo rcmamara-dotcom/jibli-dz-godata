@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from peewee import (
-    Model, AutoField, CharField, TextField,
+    Model, AutoField, BooleanField, CharField, TextField,
     FloatField, IntegerField, DateField, DateTimeField, ForeignKeyField,
 )
 from .db import database
@@ -15,6 +15,7 @@ class User(BaseModel):
     id = AutoField()
     email = CharField(max_length=255, unique=True)
     password_hash = CharField(max_length=255)
+    is_admin = BooleanField(default=False)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     class Meta:

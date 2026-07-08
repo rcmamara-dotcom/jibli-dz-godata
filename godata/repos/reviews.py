@@ -60,6 +60,18 @@ class ReviewRepo:
         ).exists()
 
     @staticmethod
+    def list_all() -> list[Review]:
+        return list(
+            Review.select(Review, User)
+            .join(User, on=(Review.reviewer == User.id))
+            .order_by(Review.created_at.desc())
+        )
+
+    @staticmethod
+    def force_delete(review_id: int) -> bool:
+        return Review.delete().where(Review.id == review_id).execute() > 0
+
+    @staticmethod
     def create(trip_id: int, reviewer_id: int, rating: int, comment: str | None) -> Review:
         return Review.create(
             trip_id=trip_id,

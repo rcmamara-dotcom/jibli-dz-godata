@@ -20,3 +20,12 @@ class UserRepo:
             return User.get_by_id(user_id)
         except DoesNotExist:
             return None
+
+    @staticmethod
+    def list_all() -> list[User]:
+        return list(User.select().order_by(User.created_at.desc()))
+
+    @staticmethod
+    def force_delete(user_id: int) -> bool:
+        deleted = User.delete().where(User.id == user_id).execute()
+        return deleted > 0
