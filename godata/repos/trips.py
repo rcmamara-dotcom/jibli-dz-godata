@@ -1,3 +1,4 @@
+import datetime
 from peewee import DoesNotExist, JOIN
 from ..models import Trip, User
 
@@ -30,3 +31,24 @@ class TripRepo:
             .execute()
         )
         return deleted > 0
+
+    @staticmethod
+    def list_expiring_on(target_date: datetime.date) -> list[Trip]:
+        """Return trips whose travel date equals target_date, with owner pre-fetched."""
+        return list(
+            Trip.select(Trip, User)
+            .join(User, join_type=JOIN.LEFT_OUTER, on=(Trip.owner == User.id))
+            .where(Trip.date == target_date)
+        )
+
+    @staticmethod
+    def pop_expired(before: datetime.date) -> list[Trip]:
+        """Return then delete all trips with date strictly before `before`."""
+        expired = list(
+            Trip.select(Trip, User)
+            .join(User, join_type=JOIN.LEFT_OUTER, on=(Trip.owner == User.id))
+            .where(Trip.date < before)
+        )
+        if expired:
+            Trip.delete().where(Trip.date < before).execute()
+        return expired
