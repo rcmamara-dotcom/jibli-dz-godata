@@ -17,7 +17,8 @@ class User(BaseModel):
     password_hash = CharField(max_length=255)
     name = CharField(max_length=100, null=True)
     birth_date = DateField(null=True)
-    google_id = CharField(max_length=128, unique=True, null=True)
+    # unique enforced via partial index in migration (null-safe)
+    google_id = CharField(max_length=128, null=True)
     is_admin = BooleanField(default=False)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
