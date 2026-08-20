@@ -15,6 +15,9 @@ class User(BaseModel):
     id = AutoField()
     email = CharField(max_length=255, unique=True)
     password_hash = CharField(max_length=255)
+    name = CharField(max_length=100, null=True)
+    birth_date = DateField(null=True)
+    google_id = CharField(max_length=128, unique=True, null=True)
     is_admin = BooleanField(default=False)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
