@@ -10,12 +10,14 @@ class UserRepo:
         password_hash: str,
         name: str | None = None,
         birth_date: DateType | None = None,
+        phone: str | None = None,
     ) -> User:
         return User.create(
             email=email,
             password_hash=password_hash,
             name=name,
             birth_date=birth_date,
+            phone=phone,
         )
 
     @staticmethod
@@ -50,11 +52,13 @@ class UserRepo:
         user = UserRepo.get_by_email(email)
         if user:
             # Link existing email account to Google
-            User.update(google_id=google_id, name=name or user.name).where(
+            User.update(google_id=google_id, name=name or user.name, email_verified=True).where(
                 User.id == user.id
             ).execute()
             return UserRepo.get_by_id(user.id)  # type: ignore[return-value]
-        return User.create(email=email, password_hash="", google_id=google_id, name=name)
+        return User.create(
+            email=email, password_hash="", google_id=google_id, name=name, email_verified=True
+        )
 
     @staticmethod
     def list_all() -> list[User]:
@@ -64,6 +68,23 @@ class UserRepo:
     def update_password(user_id: int, password_hash: str) -> bool:
         updated = User.update(password_hash=password_hash).where(User.id == user_id).execute()
         return updated > 0
+
+    @staticmethod
+    def update_profile(user_id: int, **fields) -> bool:
+        """Met à jour name / phone / birth_date (seuls les champs passés)."""
+        allowed = {k: v for k, v in fields.items() if k in ("name", "phone", "birth_date")}
+        if not allowed:
+            return False
+        return User.update(**allowed).where(User.id == user_id).execute() > 0
+
+    @staticmethod
+    def update_email(user_id: int, email: str) -> bool:
+        """Change l'e-mail ; il devra être revérifié."""
+        return User.update(email=email, email_verified=False).where(User.id == user_id).execute() > 0
+
+    @staticmethod
+    def set_email_verified(user_id: int) -> bool:
+        return User.update(email_verified=True).where(User.id == user_id).execute() > 0
 
     @staticmethod
     def force_delete(user_id: int) -> bool:

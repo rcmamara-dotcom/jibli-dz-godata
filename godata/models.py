@@ -17,6 +17,8 @@ class User(BaseModel):
     password_hash = CharField(max_length=255)
     name = CharField(max_length=100, null=True)
     birth_date = DateField(null=True)
+    phone = CharField(max_length=20, null=True)  # null pour les comptes créés avant l'ajout
+    email_verified = BooleanField(default=False)
     # unique enforced via partial index in migration (null-safe)
     google_id = CharField(max_length=128, null=True)
     is_admin = BooleanField(default=False)

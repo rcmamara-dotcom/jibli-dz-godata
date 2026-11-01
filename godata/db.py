@@ -25,11 +25,17 @@ def init_db() -> None:
 
 
 def _migrate_columns() -> None:
-    """Add new columns to existing tables (safe to run multiple times)."""
+    """Add new columns to existing tables (safe to run multiple times).
+
+    IF EXISTS : sur une base vide, un ALTER en échec annulerait la transaction
+    et ferait échouer create_tables.
+    """
     for sql in [
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS name VARCHAR(100)",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(128)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS name VARCHAR(100)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS birth_date DATE",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS google_id VARCHAR(128)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
     ]:
         try:
             database.execute_sql(sql)
