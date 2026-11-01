@@ -50,6 +50,9 @@ class Trip(BaseModel):
         table_name = "trips"
 
 
+PARCEL_TYPES = ("vetements", "alimentaire", "electronique", "medicaments", "documents", "autre")
+
+
 class Parcel(BaseModel):
     id = AutoField()
     owner = ForeignKeyField(User, backref="parcels", null=True, on_delete="SET NULL")
@@ -58,6 +61,11 @@ class Parcel(BaseModel):
     description = TextField()
     budget = FloatField(default=0)
     wa = CharField(max_length=20)
+    weight = FloatField(null=True)       # kg
+    length = FloatField(null=True)       # cm
+    width = FloatField(null=True)        # cm
+    height = FloatField(null=True)       # cm
+    parcel_type = CharField(max_length=20, null=True)  # voir PARCEL_TYPES
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     class Meta:

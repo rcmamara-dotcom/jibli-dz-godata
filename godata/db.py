@@ -37,6 +37,11 @@ def _migrate_columns() -> None:
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user'",
+        "ALTER TABLE IF EXISTS parcels ADD COLUMN IF NOT EXISTS weight REAL",
+        "ALTER TABLE IF EXISTS parcels ADD COLUMN IF NOT EXISTS length REAL",
+        "ALTER TABLE IF EXISTS parcels ADD COLUMN IF NOT EXISTS width REAL",
+        "ALTER TABLE IF EXISTS parcels ADD COLUMN IF NOT EXISTS height REAL",
+        "ALTER TABLE IF EXISTS parcels ADD COLUMN IF NOT EXISTS parcel_type VARCHAR(20)",
     ]:
         try:
             database.execute_sql(sql)
