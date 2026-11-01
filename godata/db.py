@@ -36,6 +36,7 @@ def _migrate_columns() -> None:
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS google_id VARCHAR(128)",
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
         "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'user'",
     ]:
         try:
             database.execute_sql(sql)
@@ -50,6 +51,8 @@ def _migrate_indexes() -> None:
         database.execute_sql(
             "UPDATE users SET email_verified = TRUE WHERE google_id IS NOT NULL AND email_verified = FALSE"
         )
+        # les admins d'avant les rôles gardent leurs droits
+        database.execute_sql("UPDATE users SET role = 'admin' WHERE is_admin = TRUE AND role = 'user'")
     except Exception:
         pass
     try:

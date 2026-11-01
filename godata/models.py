@@ -11,6 +11,10 @@ class BaseModel(Model):
         database = database
 
 
+# Rôles du moins au plus élevé ; les droits de chacun sont définis dans l'API.
+ROLES = ("user", "vip", "moderator", "admin")
+
+
 class User(BaseModel):
     id = AutoField()
     email = CharField(max_length=255, unique=True)
@@ -21,7 +25,8 @@ class User(BaseModel):
     email_verified = BooleanField(default=False)
     # unique enforced via partial index in migration (null-safe)
     google_id = CharField(max_length=128, null=True)
-    is_admin = BooleanField(default=False)
+    is_admin = BooleanField(default=False)  # = role == "admin", gardé pour compatibilité
+    role = CharField(max_length=20, default="user")  # voir ROLES
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     class Meta:

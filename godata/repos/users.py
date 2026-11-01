@@ -1,6 +1,6 @@
 from datetime import date as DateType
 from peewee import DoesNotExist
-from ..models import User
+from ..models import User, ROLES
 
 
 class UserRepo:
@@ -89,6 +89,12 @@ class UserRepo:
     @staticmethod
     def set_email_verified(user_id: int) -> bool:
         return User.update(email_verified=True).where(User.id == user_id).execute() > 0
+
+    @staticmethod
+    def set_role(user_id: int, role: str) -> bool:
+        if role not in ROLES:
+            raise ValueError(f"Rôle inconnu : {role}")
+        return User.update(role=role, is_admin=(role == "admin")).where(User.id == user_id).execute() > 0
 
     @staticmethod
     def force_delete(user_id: int) -> bool:
