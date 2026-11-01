@@ -1,5 +1,5 @@
 import datetime
-from peewee import DoesNotExist, JOIN
+from peewee import DoesNotExist, JOIN, fn
 from ..models import Trip, User
 
 
@@ -44,6 +44,13 @@ class TripRepo:
     @staticmethod
     def force_delete(trip_id: int) -> bool:
         return Trip.delete().where(Trip.id == trip_id).execute() > 0
+
+    @staticmethod
+    def count_by_user_since(user_id: int, since: datetime.datetime) -> int:
+        return Trip.select(fn.COUNT(Trip.id)).where(
+            Trip.owner_id == user_id,
+            Trip.created_at >= since,
+        ).scalar()
 
     @staticmethod
     def pop_expired(before: datetime.date) -> list[Trip]:

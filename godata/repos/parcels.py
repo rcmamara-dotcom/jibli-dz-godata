@@ -1,4 +1,5 @@
-from peewee import DoesNotExist, JOIN
+import datetime
+from peewee import DoesNotExist, JOIN, fn
 from ..models import Parcel, User
 
 
@@ -34,6 +35,13 @@ class ParcelRepo:
     @staticmethod
     def force_delete(parcel_id: int) -> bool:
         return Parcel.delete().where(Parcel.id == parcel_id).execute() > 0
+
+    @staticmethod
+    def count_by_user_since(user_id: int, since: datetime.datetime) -> int:
+        return Parcel.select(fn.COUNT(Parcel.id)).where(
+            Parcel.owner_id == user_id,
+            Parcel.created_at >= since,
+        ).scalar()
 
     @staticmethod
     def list_matching(from_city: str, to_city: str) -> list[Parcel]:

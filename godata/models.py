@@ -57,6 +57,21 @@ class Parcel(BaseModel):
         table_name = "parcels"
 
 
+class Subscription(BaseModel):
+    id = AutoField()
+    user = ForeignKeyField(User, backref="subscriptions", on_delete="CASCADE", unique=True)
+    plan = CharField(max_length=20)  # starter | voyageur | pro
+    status = CharField(max_length=20)  # active | cancelled | past_due | incomplete
+    stripe_subscription_id = CharField(max_length=128, unique=True)
+    stripe_customer_id = CharField(max_length=128)
+    current_period_start = DateTimeField()
+    current_period_end = DateTimeField()
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "subscriptions"
+
+
 class Review(BaseModel):
     id = AutoField()
     trip = ForeignKeyField(Trip, backref="reviews", on_delete="CASCADE")

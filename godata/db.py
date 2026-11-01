@@ -15,12 +15,12 @@ def init_db() -> None:
         port=int(os.environ.get("DB_PORT", 5432)),
         **ssl,
     )
-    from .models import User, Trip, Parcel, Review
+    from .models import User, Trip, Parcel, Review, Subscription
     with database:
         # Run column migrations BEFORE create_tables so peewee
         # doesn't try to index columns that don't exist yet.
         _migrate_columns()
-        database.create_tables([User, Trip, Parcel, Review], safe=True)
+        database.create_tables([User, Trip, Parcel, Review, Subscription], safe=True)
         _migrate_indexes()
 
 
