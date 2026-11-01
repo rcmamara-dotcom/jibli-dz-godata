@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from peewee import (
-    Model, AutoField, CharField, TextField,
-    FloatField, DateField, DateTimeField, ForeignKeyField,
+    Model, AutoField, BooleanField, CharField, TextField,
+    FloatField, IntegerField, DateField, DateTimeField, ForeignKeyField,
 )
 from .db import database
 
@@ -15,6 +15,13 @@ class User(BaseModel):
     id = AutoField()
     email = CharField(max_length=255, unique=True)
     password_hash = CharField(max_length=255)
+    name = CharField(max_length=100, null=True)
+    birth_date = DateField(null=True)
+    phone = CharField(max_length=20, null=True)  # null pour les comptes créés avant l'ajout
+    email_verified = BooleanField(default=False)
+    # unique enforced via partial index in migration (null-safe)
+    google_id = CharField(max_length=128, null=True)
+    is_admin = BooleanField(default=False)
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     class Meta:
@@ -50,3 +57,67 @@ class Parcel(BaseModel):
 
     class Meta:
         table_name = "parcels"
+
+
+class Subscription(BaseModel):
+    id = AutoField()
+    user = ForeignKeyField(User, backref="subscriptions", on_delete="CASCADE", unique=True)
+    plan = CharField(max_length=20)  # starter | voyageur | pro
+    status = CharField(max_length=20)  # active | cancelled | past_due | incomplete
+    stripe_subscription_id = CharField(max_length=128, unique=True)
+    stripe_customer_id = CharField(max_length=128)
+    current_period_start = DateTimeField()
+    current_period_end = DateTimeField()
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "subscriptions"
+
+
+class Review(BaseModel):
+    id = AutoField()
+    trip = ForeignKeyField(Trip, backref="reviews", on_delete="CASCADE")
+    reviewer = ForeignKeyField(User, backref="given_reviews", on_delete="CASCADE")
+    rating = IntegerField()          # 1 à 5
+    comment = TextField(null=True)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "reviews"
+        indexes = ((("trip", "reviewer"), True),)   # un seul avis par (trajet, user)
+
+
+# Étapes d'un envoi, dans l'ordre. "cancelled" est hors parcours.
+SHIPMENT_STEPS = ("deposited", "accepted", "picked_up", "in_transit", "arrived", "delivered")
+SHIPMENT_CANCELLED = "cancelled"
+
+
+class Shipment(BaseModel):
+    """Un colis confié à un voyageur, suivi étape par étape."""
+    id = AutoField()
+    # SET NULL : le trajet est supprimé après sa date, le suivi doit rester
+    trip = ForeignKeyField(Trip, backref="shipments", null=True, on_delete="SET NULL")
+    sender = ForeignKeyField(User, backref="sent_shipments", on_delete="CASCADE")
+    carrier = ForeignKeyField(User, backref="carried_shipments", on_delete="CASCADE")
+    # copiés du trajet pour la même raison
+    from_city = CharField(max_length=100)
+    to_city = CharField(max_length=100)
+    trip_date = DateField(null=True)
+    description = TextField()
+    status = CharField(max_length=20, default="deposited")
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "shipments"
+
+
+class ShipmentEvent(BaseModel):
+    """Historique : une ligne par changement d'étape (date affichée sous chaque point)."""
+    id = AutoField()
+    shipment = ForeignKeyField(Shipment, backref="events", on_delete="CASCADE")
+    status = CharField(max_length=20)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "shipment_events"

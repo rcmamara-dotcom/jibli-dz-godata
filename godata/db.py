@@ -5,7 +5,7 @@ database = PostgresqlDatabase(None)
 
 
 def init_db() -> None:
-    """Configure la connexion et crée les tables (idempotent)."""
+    """Configure la connexion, migre les nouvelles colonnes, puis crée les tables."""
     ssl = {"sslmode": "require"} if os.environ.get("DB_SSL", "true").lower() != "false" else {}
     database.init(
         os.environ["DB_NAME"],
@@ -13,9 +13,42 @@ def init_db() -> None:
         password=os.environ["DB_PASSWORD"],
         host=os.environ.get("DB_HOST", "localhost"),
         port=int(os.environ.get("DB_PORT", 5432)),
-        autorollback=True,
         **ssl,
     )
-    from .models import User, Trip, Parcel
+    from .models import User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent
     with database:
-        database.create_tables([User, Trip, Parcel], safe=True)
+        # Run column migrations BEFORE create_tables so peewee
+        # doesn't try to index columns that don't exist yet.
+        _migrate_columns()
+        database.create_tables([User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent], safe=True)
+        _migrate_indexes()
+
+
+def _migrate_columns() -> None:
+    """Add new columns to existing tables (safe to run multiple times).
+
+    IF EXISTS : sur une base vide, un ALTER en échec annulerait la transaction
+    et ferait échouer create_tables.
+    """
+    for sql in [
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS name VARCHAR(100)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS birth_date DATE",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS google_id VARCHAR(128)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
+        "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE",
+    ]:
+        try:
+            database.execute_sql(sql)
+        except Exception:
+            pass
+
+
+def _migrate_indexes() -> None:
+    """Create indexes that need columns to exist first."""
+    try:
+        database.execute_sql(
+            "CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_key "
+            "ON users (google_id) WHERE google_id IS NOT NULL"
+        )
+    except Exception:
+        pass
