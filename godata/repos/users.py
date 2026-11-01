@@ -48,6 +48,10 @@ class UserRepo:
         """Find or create a user from a verified Google sign-in."""
         user = UserRepo.get_by_google_id(google_id)
         if user:
+            if not user.email_verified:
+                # compte Google créé avant la vérification e-mail : Google a déjà vérifié l'adresse
+                UserRepo.set_email_verified(user.id)
+                user.email_verified = True
             return user
         user = UserRepo.get_by_email(email)
         if user:

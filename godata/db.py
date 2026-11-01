@@ -46,6 +46,13 @@ def _migrate_columns() -> None:
 def _migrate_indexes() -> None:
     """Create indexes that need columns to exist first."""
     try:
+        # Comptes Google antérieurs à la vérification e-mail : adresse déjà vérifiée par Google
+        database.execute_sql(
+            "UPDATE users SET email_verified = TRUE WHERE google_id IS NOT NULL AND email_verified = FALSE"
+        )
+    except Exception:
+        pass
+    try:
         database.execute_sql(
             "CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_key "
             "ON users (google_id) WHERE google_id IS NOT NULL"
