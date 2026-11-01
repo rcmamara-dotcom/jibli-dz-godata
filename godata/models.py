@@ -85,3 +85,39 @@ class Review(BaseModel):
     class Meta:
         table_name = "reviews"
         indexes = ((("trip", "reviewer"), True),)   # un seul avis par (trajet, user)
+
+
+# Étapes d'un envoi, dans l'ordre. "cancelled" est hors parcours.
+SHIPMENT_STEPS = ("deposited", "accepted", "picked_up", "in_transit", "arrived", "delivered")
+SHIPMENT_CANCELLED = "cancelled"
+
+
+class Shipment(BaseModel):
+    """Un colis confié à un voyageur, suivi étape par étape."""
+    id = AutoField()
+    # SET NULL : le trajet est supprimé après sa date, le suivi doit rester
+    trip = ForeignKeyField(Trip, backref="shipments", null=True, on_delete="SET NULL")
+    sender = ForeignKeyField(User, backref="sent_shipments", on_delete="CASCADE")
+    carrier = ForeignKeyField(User, backref="carried_shipments", on_delete="CASCADE")
+    # copiés du trajet pour la même raison
+    from_city = CharField(max_length=100)
+    to_city = CharField(max_length=100)
+    trip_date = DateField(null=True)
+    description = TextField()
+    status = CharField(max_length=20, default="deposited")
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "shipments"
+
+
+class ShipmentEvent(BaseModel):
+    """Historique : une ligne par changement d'étape (date affichée sous chaque point)."""
+    id = AutoField()
+    shipment = ForeignKeyField(Shipment, backref="events", on_delete="CASCADE")
+    status = CharField(max_length=20)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "shipment_events"
