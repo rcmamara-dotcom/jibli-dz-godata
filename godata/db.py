@@ -15,13 +15,21 @@ def init_db() -> None:
         port=int(os.environ.get("DB_PORT", 5432)),
         **ssl,
     )
-    from .models import User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent, Conversation, Message
+    from .models import (
+        User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent, Conversation, Message, UserReview,
+    )
     with database:
         # Run column migrations BEFORE create_tables so peewee
         # doesn't try to index columns that don't exist yet.
         _migrate_columns()
-        database.create_tables([User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent, Conversation, Message], safe=True)
+        first_user_reviews = not database.table_exists("user_reviews")
+        database.create_tables(
+            [User, Trip, Parcel, Review, Subscription, Shipment, ShipmentEvent, Conversation, Message, UserReview],
+            safe=True,
+        )
         _migrate_indexes()
+        if first_user_reviews:
+            _import_trip_reviews()
 
 
 def _migrate_columns() -> None:
@@ -48,6 +56,23 @@ def _migrate_columns() -> None:
             database.execute_sql(sql)
         except Exception:
             pass
+
+
+def _import_trip_reviews() -> None:
+    """Une seule fois : les anciens avis de trajet deviennent des avis sur le voyageur (le plus récent par paire)."""
+    try:
+        with database.atomic():
+            database.execute_sql(
+                "INSERT INTO user_reviews (reviewer_id, reviewed_id, rating, comment, created_at, updated_at) "
+                "SELECT DISTINCT ON (r.reviewer_id, t.owner_id) r.reviewer_id, t.owner_id, r.rating, r.comment, "
+                "r.created_at, r.created_at "
+                "FROM reviews r JOIN trips t ON t.id = r.trip_id "
+                "WHERE t.owner_id IS NOT NULL AND t.owner_id <> r.reviewer_id "
+                "ORDER BY r.reviewer_id, t.owner_id, r.created_at DESC "
+                "ON CONFLICT DO NOTHING"
+            )
+    except Exception:
+        pass
 
 
 def _migrate_indexes() -> None:

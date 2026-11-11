@@ -101,6 +101,24 @@ class Review(BaseModel):
         indexes = ((("trip", "reviewer"), True),)   # un seul avis par (trajet, user)
 
 
+class UserReview(BaseModel):
+    """Note d'un utilisateur sur un autre (un seul avis par paire, modifiable).
+
+    Remplace Review (lié aux trajets, supprimé avec eux chaque nuit) : la note suit la personne.
+    """
+    id = AutoField()
+    reviewer = ForeignKeyField(User, backref="user_reviews_given", on_delete="CASCADE")
+    reviewed = ForeignKeyField(User, backref="user_reviews_received", on_delete="CASCADE")
+    rating = IntegerField()          # 1 à 5
+    comment = TextField(null=True)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+    updated_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "user_reviews"
+        indexes = ((("reviewer", "reviewed"), True),)
+
+
 # Étapes d'un envoi, dans l'ordre. "cancelled" est hors parcours.
 SHIPMENT_STEPS = ("deposited", "accepted", "picked_up", "in_transit", "arrived", "delivered")
 SHIPMENT_CANCELLED = "cancelled"
