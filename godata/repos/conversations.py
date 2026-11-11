@@ -77,6 +77,15 @@ class ConversationRepo:
         ).execute()
 
     @staticmethod
+    def unread_in_conversation(conv_id: int, user_id: int) -> int:
+        """Messages de l'autre partie que cet utilisateur n'a pas encore lus dans la conversation."""
+        return (
+            Message.select()
+            .where((Message.conversation == conv_id) & (Message.sender != user_id) & (Message.is_read == False))
+            .count()
+        )
+
+    @staticmethod
     def unread_count(user_id: int) -> int:
         """Nombre total de messages non lus pour cet utilisateur."""
         return (

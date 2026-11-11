@@ -27,6 +27,7 @@ class User(BaseModel):
     google_id = CharField(max_length=128, null=True)
     is_admin = BooleanField(default=False)  # = role == "admin", gardé pour compatibilité
     role = CharField(max_length=20, default="user")  # voir ROLES
+    notify_messages = BooleanField(default=True)  # e-mail à chaque nouveau message reçu
     created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
 
     class Meta:

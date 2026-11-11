@@ -75,8 +75,8 @@ class UserRepo:
 
     @staticmethod
     def update_profile(user_id: int, **fields) -> bool:
-        """Met à jour name / phone / birth_date (seuls les champs passés)."""
-        allowed = {k: v for k, v in fields.items() if k in ("name", "phone", "birth_date")}
+        """Met à jour name / phone / birth_date / notify_messages (seuls les champs passés)."""
+        allowed = {k: v for k, v in fields.items() if k in ("name", "phone", "birth_date", "notify_messages")}
         if not allowed:
             return False
         return User.update(**allowed).where(User.id == user_id).execute() > 0
