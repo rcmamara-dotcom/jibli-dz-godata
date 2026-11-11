@@ -134,3 +134,30 @@ class ShipmentEvent(BaseModel):
 
     class Meta:
         table_name = "shipment_events"
+
+
+class Conversation(BaseModel):
+    """Fil de messagerie privée entre deux utilisateurs, lié à une annonce."""
+    id = AutoField()
+    initiator = ForeignKeyField(User, backref="initiated_conversations", on_delete="CASCADE")
+    recipient = ForeignKeyField(User, backref="received_conversations", on_delete="CASCADE")
+    # Lié à un trajet OU un colis (au plus un des deux)
+    trip = ForeignKeyField(Trip, backref="conversations", null=True, on_delete="SET NULL")
+    parcel = ForeignKeyField(Parcel, backref="conversations", null=True, on_delete="SET NULL")
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "conversations"
+
+
+class Message(BaseModel):
+    """Un message dans une conversation."""
+    id = AutoField()
+    conversation = ForeignKeyField(Conversation, backref="messages", on_delete="CASCADE")
+    sender = ForeignKeyField(User, backref="sent_messages", on_delete="CASCADE")
+    content = TextField()
+    is_read = BooleanField(default=False)
+    created_at = DateTimeField(default=lambda: datetime.now(timezone.utc))
+
+    class Meta:
+        table_name = "messages"

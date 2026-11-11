@@ -4,5 +4,6 @@ from .parcels import ParcelRepo
 from .reviews import ReviewRepo
 from .subscriptions import SubscriptionRepo
 from .shipments import ShipmentRepo
+from .conversations import ConversationRepo
 
-__all__ = ["UserRepo", "TripRepo", "ParcelRepo", "ReviewRepo", "SubscriptionRepo", "ShipmentRepo"]
+__all__ = ["UserRepo", "TripRepo", "ParcelRepo", "ReviewRepo", "SubscriptionRepo", "ShipmentRepo", "ConversationRepo"]
